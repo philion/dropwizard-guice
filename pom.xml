@@ -2,7 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
+    <prerequisites>
+        <maven>3</maven>
+    </prerequisites>
+    
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
 		<artifactId>oss-parent</artifactId>
@@ -17,12 +20,12 @@
         </repository>
     </repositories>
 
-	<groupId>com.hubspot.dropwizard</groupId>
+	<groupId>com.acmerocket.dropwizard</groupId>
 	<artifactId>dropwizard-guice</artifactId>
-	<version>0.7.0.2</version>
+	<version>0.7.1.0</version>
 	<name>Dropwizard Guice Support</name>
 	<description>Simple library for using Guice DI in a dropwizard service.</description>
-	<url>https://github.com/HubSpot/dropwizard-guice</url>
+	<url>https://github.com/philion/dropwizard-guice</url>
 
 	<licenses>
 		<license>
@@ -33,9 +36,9 @@
 	</licenses>
 
 	<scm>
-		<connection>scm:git:git@github.com:HubSpot/dropwizard-guice.git</connection>
-		<developerConnection>scm:git:git@github.com:HubSpot/dropwizard-guice.git</developerConnection>
-		<url>git@github.com:HubSpot/dropwizard-guice.git</url>
+		<connection>scm:git:git@github.com:philion/dropwizard-guice.git</connection>
+		<developerConnection>scm:git:git@github.com:philion/dropwizard-guice.git</developerConnection>
+		<url>git@github.com:philion/dropwizard-guice.git</url>
 	</scm>
 
 	<developers>
@@ -44,13 +47,18 @@
 			<name>Elias Torres</name>
 			<email>elias@hubspot.com</email>
 		</developer>
+		<developer>
+			<id>philion</id>
+			<name>Paul Philion</name>
+			<email>philion@acmerocket.com</email>
+		</developer>
 	</developers>
 
 	<dependencies>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>0.7.0</version>
+            <version>0.7.1</version>
         </dependency>
 		<dependency>
 			<groupId>com.google.inject.extensions</groupId>
@@ -80,9 +88,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.5</version>
+                <version>3.1</version>
                 <configuration>
-                    <!-- http://maven.apache.org/plugins/maven-compiler-plugin/ -->
                     <source>1.7</source>
                     <target>1.7</target>
                 </configuration>
@@ -91,7 +98,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.4</version>
+                <version>1.5</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
@@ -120,7 +127,7 @@
             <plugin>
              <groupId>org.apache.maven.plugins</groupId>
              <artifactId>maven-javadoc-plugin</artifactId>
-             <version>2.9</version>
+             <version>2.9.1</version>
              <executions>
                  <execution>
                      <id>generate-javadoc-jar</id>
