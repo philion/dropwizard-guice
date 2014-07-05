@@ -55,6 +55,7 @@ public class GuiceBundle<T extends Configuration> implements ConfiguredBundle<T>
     @Override
     public void run(final T configuration, final Environment environment) {
     	this.context = GuiceContext.build(configuration, environment, this.container);
+    	LOG.info("Initialized GuiceContext: {}", context);
        	
         this.container.setResourceConfig(environment.jersey().getResourceConfig());
         environment.jersey().replace(new Function<ResourceConfig, ServletContainer>() {

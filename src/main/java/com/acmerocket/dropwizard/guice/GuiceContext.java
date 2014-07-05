@@ -13,6 +13,7 @@ import io.dropwizard.validation.valuehandling.OptionalValidatedValueUnwrapper;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import javax.validation.Validation;
@@ -24,10 +25,13 @@ import org.slf4j.LoggerFactory;
 
 import com.acmerocket.guice.modules.Modules;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
+import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Stage;
 
@@ -36,17 +40,17 @@ public class GuiceContext {
 	private static final Logger LOG = LoggerFactory.getLogger(GuiceContext.class);
 
 	private final Injector injector;
-	
+
 	public static Builder builder() {
 		return new Builder();
 	}
-	
+
 	private static class Builder {
 		private final Set<String> moduleNames = Sets.newHashSet();
 		private final Set<Module> modules = Sets.newHashSet();
 		private final Set<String> paths = Sets.newHashSet();
 		private Stage stage = Stage.PRODUCTION;
-		
+
 		@SuppressWarnings("unused")
 		public Builder modules(Module... modules) {
 			// check null
@@ -115,38 +119,38 @@ public class GuiceContext {
 			//return com.google.inject.Guice.createInjector(this.stage, this.modules); // FIXME double-check!
 		}
 	}
-	
+
 	public static GuiceContext build(Configuration configuration, Environment environment, GuiceContainer container) {
-    	GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
-    	return builder().config(guiceConfig)
-    			.module(new ConfigurationModule(configuration))
-    			.module(new EnvironmentModule(environment))
-    			.module(new JerseyContainerModule(container))
-    			.build();
+		GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
+		return builder().config(guiceConfig)
+				.module(new ConfigurationModule(configuration))
+				.module(new EnvironmentModule(environment))
+				.module(new JerseyContainerModule(container))
+				.build();
 	}
-	
+
 	public static GuiceContext build(Configuration configuration, Environment environment) {
-    	GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
-    	return builder().config(guiceConfig)
-    			.module(new ConfigurationModule(configuration))
-    			.module(new EnvironmentModule(environment))
-    			.build();
+		GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
+		return builder().config(guiceConfig)
+				.module(new ConfigurationModule(configuration))
+				.module(new EnvironmentModule(environment))
+				.build();
 	}
-	
+
 	// FIXME: DRY with above?
 	public static GuiceContext build(Configuration configuration) {
-    	GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
-    	return builder().config(guiceConfig)
-    			.module(new ConfigurationModule(configuration))
-    			.build();
+		GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
+		return builder().config(guiceConfig)
+				.module(new ConfigurationModule(configuration))
+				.build();
 	}
-	
+
 	public static GuiceContext build(File configFile, Class<? extends Configuration> clazz) {
 		return build(loadConfig(configFile.getAbsolutePath(), clazz));
 	}
-	
-    // build with ???
-	
+
+	// build with ???
+
 	public static GuiceConfiguration getGuiceConfig(Configuration config) {
 		for (Method method : config.getClass().getDeclaredMethods()) {
 			if (GuiceConfiguration.class.equals(method.getReturnType())) {
@@ -160,38 +164,42 @@ public class GuiceContext {
 		}
 		return null;
 	}
-	
-    public static <T extends Configuration> T loadConfig(String path, Class<T> clazz) {
-        try {
-        	// FIXME: This should all be part of dropwizard?
-        	ConfigurationFactoryFactory<T> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<T>();
-        	ConfigurationSourceProvider provider = new FileConfigurationSourceProvider();
-        	Validator validator = Validation.byProvider(HibernateValidator.class).configure().addValidatedValueHandler(new OptionalValidatedValueUnwrapper()).buildValidatorFactory().getValidator();
-        	ObjectMapper objectMapper = Jackson.newObjectMapper();
-        	
-            ConfigurationFactory<T> configurationFactory = configurationFactoryFactory.create(clazz, validator, objectMapper, "dw");
-            
-            return configurationFactory.build(provider, path);
-        } 
-        catch (Exception e) {
-            throw new RuntimeException("Error loading config: " + path, e);
-        }
-    }
-    
+
+	public static <T extends Configuration> T loadConfig(String path, Class<T> clazz) {
+		try {
+			// FIXME: This should all be part of dropwizard?
+			ConfigurationFactoryFactory<T> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<T>();
+			ConfigurationSourceProvider provider = new FileConfigurationSourceProvider();
+			Validator validator = Validation.byProvider(HibernateValidator.class).configure().addValidatedValueHandler(new OptionalValidatedValueUnwrapper()).buildValidatorFactory().getValidator();
+			ObjectMapper objectMapper = Jackson.newObjectMapper();
+
+			ConfigurationFactory<T> configurationFactory = configurationFactoryFactory.create(clazz, validator, objectMapper, "dw");
+
+			return configurationFactory.build(provider, path);
+		} 
+		catch (Exception e) {
+			throw new RuntimeException("Error loading config: " + path, e);
+		}
+	}
+
 	private GuiceContext(Builder builder) {
 		// In builder, or here?
 		Iterables.addAll(builder.modules, this.scanForModules(builder));
 		this.injector = Guice.createInjector(builder.stage, builder.modules);
+		LOG.info("Created injector with: {}", Iterables.transform(builder.modules, simpleNames));
+		if (LOG.isDebugEnabled()) {
+			this.logInjector();
+		}
 	}
-	
+
 	private Iterable<? extends Module> scanForModules(Builder builder) {
 		if (builder.paths.isEmpty() && builder.moduleNames.isEmpty()) {
 			return Collections.emptySet();
 		}
 		else if (!builder.paths.isEmpty()) {
-			Iterable<? extends Module> modules = 
-					Modules.Builder.packages(builder.paths).build(builder.moduleNames);
-			LOG.info("### Found modules: {}", modules);
+			LOG.debug("Scanning for modules in {}", builder.paths);
+			Iterable<? extends Module> modules = Modules.Builder.packages(builder.paths).build(builder.moduleNames);
+			LOG.info("Found modules: {}", Iterables.transform(modules, simpleNames));
 			return modules;
 		}
 		else {
@@ -205,5 +213,22 @@ public class GuiceContext {
 
 	public <C> C get(Class<C> type) {
 		return this.injector().getInstance(type);
+	}
+
+	private static final Function<Object,String> simpleNames = new Function<Object,String>() {
+		public String apply(Object input) {
+			return input.getClass().getSimpleName();
+		}
+	};
+
+	protected void logInjector() {
+		StringBuilder builder = new StringBuilder("\n---- Available Bindings ----\n");
+		for (Map.Entry<Key<?>, Binding<?>> binding : this.injector.getAllBindings().entrySet()) {
+			builder.append(binding.getKey())
+				.append(" ==> ")
+				.append(binding.getValue())
+				.append("\n");
+		}
+		LOG.info(builder.toString());
 	}
 }
