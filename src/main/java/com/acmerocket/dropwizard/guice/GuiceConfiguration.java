@@ -15,6 +15,8 @@
  */
 package com.acmerocket.dropwizard.guice;
 
+import java.util.Arrays;
+
 import com.google.inject.Stage;
 
 /**
@@ -67,5 +69,11 @@ public class GuiceConfiguration {
 	 */
 	public void setScanPackage(String scanPackage) {
 		this.scanPackage = scanPackage;
+	}
+
+	@Override
+	public String toString() {
+		return "GuiceConfiguration [modules=" + Arrays.toString(modules)
+				+ ", stage=" + stage + ", scanPackage=" + scanPackage + "]";
 	}
 }

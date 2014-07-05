@@ -6,10 +6,10 @@ server:
   applicationContextPath: /v1
   
 logging:
-  level: INFO
+  level: trace
   loggers:
-    com.acmerocket: INFO
-    com.example: DEBUG
+    com.acmerocket: trace
+    com.example: trace
   appenders:
     - type: console
       logFormat: "%d{yyyy-MM-dd HH:mm:ss} %-5level %36.36logger{36}  %msg%n"

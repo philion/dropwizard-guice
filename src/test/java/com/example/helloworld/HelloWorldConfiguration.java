@@ -3,14 +3,20 @@ package com.example.helloworld;
 
 import io.dropwizard.Configuration;
 
+import javax.inject.Singleton;
 import javax.validation.Valid;
 
 import org.hibernate.validator.constraints.NotEmpty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.acmerocket.dropwizard.guice.GuiceConfiguration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@Singleton
 public class HelloWorldConfiguration extends Configuration {
+    private static final Logger LOG = LoggerFactory.getLogger(HelloWorldConfiguration.class);
+
 	@NotEmpty
     private String template;
 
@@ -19,6 +25,10 @@ public class HelloWorldConfiguration extends Configuration {
     
 	@JsonProperty @Valid
 	private GuiceConfiguration guice;
+	
+	public HelloWorldConfiguration() {
+		LOG.debug("Constructing, hash={}", hashStr());
+	}
 
     @JsonProperty
     public String getTemplate() {
@@ -45,5 +55,15 @@ public class HelloWorldConfiguration extends Configuration {
 	 */
 	public GuiceConfiguration getGuice() {
 		return guice;
+	}
+	
+	private String hashStr() {
+		return Integer.toString(System.identityHashCode(this), 36);
+	}
+
+	@Override
+	public String toString() {
+		return "<" + hashStr() + "> [template=" + template
+				+ ", defaultName=" + defaultName + ", guice=" + guice + "]";
 	}
 }

@@ -35,8 +35,8 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Stage;
 
-
-public class GuiceContext {
+@SuppressWarnings("rawtypes")
+public class GuiceContext<T extends Configuration> {
 	private static final Logger LOG = LoggerFactory.getLogger(GuiceContext.class);
 
 	private final Injector injector;
@@ -120,6 +120,7 @@ public class GuiceContext {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static GuiceContext build(Configuration configuration, Environment environment, GuiceContainer container) {
 		GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
 		return builder().config(guiceConfig)
@@ -129,6 +130,7 @@ public class GuiceContext {
 				.build();
 	}
 
+	@SuppressWarnings("unchecked")
 	public static GuiceContext build(Configuration configuration, Environment environment) {
 		GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
 		return builder().config(guiceConfig)
@@ -138,6 +140,7 @@ public class GuiceContext {
 	}
 
 	// FIXME: DRY with above?
+	@SuppressWarnings("unchecked")
 	public static GuiceContext build(Configuration configuration) {
 		GuiceConfiguration guiceConfig = getGuiceConfig(configuration);
 		return builder().config(guiceConfig)
@@ -181,13 +184,13 @@ public class GuiceContext {
 			throw new RuntimeException("Error loading config: " + path, e);
 		}
 	}
-
+	
 	private GuiceContext(Builder builder) {
 		// In builder, or here?
 		Iterables.addAll(builder.modules, this.scanForModules(builder));
 		this.injector = Guice.createInjector(builder.stage, builder.modules);
 		LOG.info("Created injector with: {}", Iterables.transform(builder.modules, simpleNames));
-		if (LOG.isDebugEnabled()) {
+		if (LOG.isTraceEnabled()) {
 			this.logInjector();
 		}
 	}

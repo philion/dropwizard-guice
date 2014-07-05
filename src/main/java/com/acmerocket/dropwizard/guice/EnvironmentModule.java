@@ -17,6 +17,9 @@ package com.acmerocket.dropwizard.guice;
 
 import io.dropwizard.setup.Environment;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.inject.AbstractModule;
 
 /**
@@ -24,6 +27,8 @@ import com.google.inject.AbstractModule;
  *
  */
 public class EnvironmentModule extends AbstractModule {
+    private static final Logger LOG = LoggerFactory.getLogger(EnvironmentModule.class);
+
 	private final Environment environment;
 	
 	public EnvironmentModule(Environment environment) {
@@ -32,6 +37,7 @@ public class EnvironmentModule extends AbstractModule {
 	
 	@Override
 	public void configure() {
+		LOG.debug("Binding {}", this.environment);
 		this.bind(Environment.class).toInstance(this.environment);
 	}
 }

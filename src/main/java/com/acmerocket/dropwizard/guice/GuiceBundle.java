@@ -22,18 +22,15 @@ public class GuiceBundle<T extends Configuration> implements ConfiguredBundle<T>
     private static final Logger LOG = LoggerFactory.getLogger(GuiceBundle.class);
 
     private final AutoConfig autoConfig;
-    //private final String[] basePackages;
-    private GuiceContext context;
+    private GuiceContext<T> context;
     private final GuiceContainer container = new GuiceContainer();
 
     public GuiceBundle() {
     	this.autoConfig = null;
-    	//this.basePackages = null;
     }
     
     public GuiceBundle(String... basePackages) {
         Preconditions.checkNotNull(basePackages.length > 0);
-        //this.basePackages = basePackages;
         this.autoConfig = new AutoConfig(basePackages);
         LOG.debug("Initialized AutoConfig with {}", basePackages);
     }
@@ -52,8 +49,9 @@ public class GuiceBundle<T extends Configuration> implements ConfiguredBundle<T>
     	// TODO: Load bundles into bootstrap
     }
 
-    @Override
-    public void run(final T configuration, final Environment environment) {
+    @SuppressWarnings("unchecked")
+	@Override
+    public void run(final T configuration, final Environment environment) {    	
     	this.context = GuiceContext.build(configuration, environment, this.container);
     	LOG.info("Initialized GuiceContext: {}", context);
        	
@@ -74,10 +72,10 @@ public class GuiceBundle<T extends Configuration> implements ConfiguredBundle<T>
     }
     
     public Injector injector() {
-    	return this.context.injector();
+    	return this.context().injector();
     }
     
-	public <C> C get(Class<C> type) {
-		return this.context.get(type);
-	} 
+    public GuiceContext<T> context() {
+    	return this.context;
+    }
 }
