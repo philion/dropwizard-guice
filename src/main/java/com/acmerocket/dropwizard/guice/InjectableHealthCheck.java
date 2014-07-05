@@ -1,4 +1,4 @@
-package com.hubspot.dropwizard.guice;
+package com.acmerocket.dropwizard.guice;
 
 import com.codahale.metrics.health.HealthCheck;
 

@@ -22,7 +22,7 @@
 
 	<groupId>com.acmerocket.dropwizard</groupId>
 	<artifactId>dropwizard-guice</artifactId>
-	<version>0.7.1.0</version>
+	<version>0.7.1.0-SNAPSHOT</version>
 	<name>Dropwizard Guice Support</name>
 	<description>Simple library for using Guice DI in a dropwizard service.</description>
 	<url>https://github.com/philion/dropwizard-guice</url>
@@ -60,6 +60,17 @@
             <artifactId>dropwizard-core</artifactId>
             <version>0.7.1</version>
         </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-testing</artifactId>
+            <version>0.7.1</version>
+            <scope>test</scope>
+        </dependency>
+		<dependency>
+			<groupId>com.acmerocket</groupId>
+			<artifactId>guice-modules</artifactId>
+			<version>3.0-SNAPSHOT</version>
+		</dependency>		
 		<dependency>
 			<groupId>com.google.inject.extensions</groupId>
 			<artifactId>guice-servlet</artifactId>
@@ -94,7 +105,7 @@
                     <target>1.7</target>
                 </configuration>
             </plugin>
-
+			<!-- 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -109,7 +120,7 @@
                     </execution>
                 </executions>
             </plugin>
-
+			-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>

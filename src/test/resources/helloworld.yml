@@ -1,0 +1,24 @@
+template: Hello, %s!
+defaultName: Stranger
+
+server:
+  type: simple
+  applicationContextPath: /v1
+  
+logging:
+  level: INFO
+  loggers:
+    com.acmerocket: DEBUG
+    com.example: DEBUG
+  appenders:
+    - type: console
+      logFormat: "%d{yyyy-MM-dd HH:mm:ss} %-5level %36.36logger{36}  %msg%n"
+
+guice:
+  modules: 
+    - test
+    - unknown
+  stage: DEVELOPMENT
+  scanPackage: com.example.helloworld
+
+  

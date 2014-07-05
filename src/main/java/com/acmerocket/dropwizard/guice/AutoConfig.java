@@ -1,13 +1,14 @@
-package com.hubspot.dropwizard.guice;
+package com.acmerocket.dropwizard.guice;
 
-import io.dropwizard.Bundle;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.servlets.tasks.Task;
-import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import com.google.common.base.Preconditions;
-import com.google.inject.Injector;
-import com.sun.jersey.spi.inject.InjectableProvider;
+
+import java.util.Set;
+
+import javax.ws.rs.Path;
+import javax.ws.rs.ext.Provider;
+
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
@@ -17,13 +18,12 @@ import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.Path;
-import javax.ws.rs.ext.Provider;
-import java.util.Set;
+import com.google.common.base.Preconditions;
+import com.google.inject.Injector;
+import com.sun.jersey.spi.inject.InjectableProvider;
 
 public class AutoConfig {
-
-	final Logger logger = LoggerFactory.getLogger(AutoConfig.class);
+	private static final Logger LOG = LoggerFactory.getLogger(AutoConfig.class);
 
 	private Reflections reflections;
 
@@ -51,16 +51,16 @@ public class AutoConfig {
 		addManaged(environment, injector);
 	}
 
-	public void initialize(Bootstrap<?> bootstrap, Injector injector) {
-		addBundles(bootstrap, injector);
-	}
+//	public void initialize(Bootstrap<?> bootstrap, Injector injector) {
+//		addBundles(bootstrap, injector);
+//	}
 
 	private void addManaged(Environment environment, Injector injector) {
 		Set<Class<? extends Managed>> managedClasses = reflections
 				.getSubTypesOf(Managed.class);
 		for (Class<? extends Managed> managed : managedClasses) {
 			environment.lifecycle().manage(injector.getInstance(managed));
-			logger.info("Added managed: {}", managed);
+			LOG.info("Added managed: {}", managed);
 		}
 	}
 
@@ -69,7 +69,7 @@ public class AutoConfig {
 				.getSubTypesOf(Task.class);
 		for (Class<? extends Task> task : taskClasses) {
 			environment.admin().addTask(injector.getInstance(task));
-			logger.info("Added task: {}", task);
+			LOG.info("Added task: {}", task);
 		}
 	}
 
@@ -79,7 +79,7 @@ public class AutoConfig {
 		for (Class<? extends InjectableHealthCheck> healthCheck : healthCheckClasses) {
             InjectableHealthCheck instance = injector.getInstance(healthCheck);
             environment.healthChecks().register(instance.getName(), instance);
-			logger.info("Added injectableHealthCheck: {}", healthCheck);
+            LOG.info("Added injectableHealthCheck: {}", healthCheck);
 		}
 	}
 
@@ -90,7 +90,7 @@ public class AutoConfig {
 				.getSubTypesOf(InjectableProvider.class);
 		for (Class<? extends InjectableProvider> injectableProvider : injectableProviders) {
 			environment.jersey().register(injectableProvider);
-			logger.info("Added injectableProvider: {}", injectableProvider);
+			LOG.info("Added injectableProvider: {}", injectableProvider);
 		}
 	}
 
@@ -99,7 +99,7 @@ public class AutoConfig {
 				.getTypesAnnotatedWith(Provider.class);
 		for (Class<?> provider : providerClasses) {
 			environment.jersey().register(provider);
-			logger.info("Added provider class: {}", provider);
+			LOG.info("Added provider class: {}", provider);
 		}
 	}
 
@@ -108,16 +108,17 @@ public class AutoConfig {
 				.getTypesAnnotatedWith(Path.class);
 		for (Class<?> resource : resourceClasses) {
 			environment.jersey().register(resource);
-			logger.info("Added resource class: {}", resource);
+			LOG.info("Added resource class: {}", resource);
 		}
 	}
 
-	private void addBundles(Bootstrap<?> bootstrap, Injector injector) {
-		Set<Class<? extends Bundle>> bundleClasses = reflections
-				.getSubTypesOf(Bundle.class);
-		for (Class<? extends Bundle> bundle : bundleClasses) {
-			bootstrap.addBundle(injector.getInstance(bundle));
-			logger.info("Added bundle class {} during bootstrap", bundle);
-		}
-	}
+// FIXME
+//	private void addBundles(Bootstrap<?> bootstrap, Injector injector) {
+//		Set<Class<? extends Bundle>> bundleClasses = reflections
+//				.getSubTypesOf(Bundle.class);
+//		for (Class<? extends Bundle> bundle : bundleClasses) {
+//			bootstrap.addBundle(injector.getInstance(bundle));
+//			logger.info("Added bundle class {} during bootstrap", bundle);
+//		}
+//	}
 }

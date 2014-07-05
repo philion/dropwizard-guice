@@ -1,9 +1,8 @@
-package com.hubspot.dropwizard.guice;
+package com.acmerocket.dropwizard.guice;
 
 import java.util.Map;
 
 import javax.servlet.ServletException;
-import javax.ws.rs.core.Application;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
@@ -42,17 +41,6 @@ public class GuiceContainer extends ServletContainer {
             m.put(ServletScopes.REQUEST, ComponentScope.PerRequest);
             return m;
         }
-    }
-
-    public GuiceContainer() {
-    }
-		
-    public GuiceContainer(Application app) {
-      super(app);
-    }
-		
-    public GuiceContainer(Class<? extends Application> app) {
-      super(app);
     }
     
     public void setResourceConfig(ResourceConfig resourceConfig) {
