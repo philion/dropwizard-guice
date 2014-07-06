@@ -22,7 +22,7 @@ public class GuiceBundle<T extends Configuration> implements ConfiguredBundle<T>
     private static final Logger LOG = LoggerFactory.getLogger(GuiceBundle.class);
 
     private final AutoConfig autoConfig;
-    private GuiceContext<T> context;
+    private GuiceContext context;
     private final GuiceContainer container = new GuiceContainer();
 
     public GuiceBundle() {
@@ -49,7 +49,6 @@ public class GuiceBundle<T extends Configuration> implements ConfiguredBundle<T>
     	// TODO: Load bundles into bootstrap
     }
 
-    @SuppressWarnings("unchecked")
 	@Override
     public void run(final T configuration, final Environment environment) {    	
     	this.context = GuiceContext.build(configuration, environment, this.container);
@@ -75,7 +74,7 @@ public class GuiceBundle<T extends Configuration> implements ConfiguredBundle<T>
     	return this.context().injector();
     }
     
-    public GuiceContext<T> context() {
+    public GuiceContext context() {
     	return this.context;
     }
 }

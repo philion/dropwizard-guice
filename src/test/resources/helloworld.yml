@@ -6,13 +6,13 @@ server:
   applicationContextPath: /v1
   
 logging:
-  level: trace
+  level: info
   loggers:
-    com.acmerocket: trace
-    com.example: trace
+    com.acmerocket: info
+    com.example: info
   appenders:
     - type: console
-      logFormat: "%d{yyyy-MM-dd HH:mm:ss} %-5level %36.36logger{36}  %msg%n"
+      logFormat: "%-5level [%d{yyyy-MM-dd HH:mm:ss.SSS}] %36.36logger{36}: %msg%n"
 
 guice:
   modules: 

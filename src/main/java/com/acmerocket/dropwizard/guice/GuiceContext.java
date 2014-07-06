@@ -7,6 +7,7 @@ import io.dropwizard.configuration.ConfigurationSourceProvider;
 import io.dropwizard.configuration.DefaultConfigurationFactoryFactory;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.jackson.Jackson;
+import io.dropwizard.logging.LoggingFactory;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.validation.valuehandling.OptionalValidatedValueUnwrapper;
 
@@ -23,10 +24,14 @@ import org.hibernate.validator.HibernateValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.Level;
+
 import com.acmerocket.guice.modules.Modules;
+import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Binding;
 import com.google.inject.Guice;
@@ -36,8 +41,15 @@ import com.google.inject.Module;
 import com.google.inject.Stage;
 
 @SuppressWarnings("rawtypes")
-public class GuiceContext<T extends Configuration> {
+public class GuiceContext {
+	static {
+		// Too much?
+		LoggingFactory.bootstrap(Level.INFO);
+	}
 	private static final Logger LOG = LoggerFactory.getLogger(GuiceContext.class);
+
+	// Cache for stored GuiceContext
+	private static final Map<String,GuiceContext> CACHE = Maps.newHashMap();
 
 	private final Injector injector;
 
@@ -45,13 +57,12 @@ public class GuiceContext<T extends Configuration> {
 		return new Builder();
 	}
 
-	private static class Builder {
+	static class Builder {
 		private final Set<String> moduleNames = Sets.newHashSet();
 		private final Set<Module> modules = Sets.newHashSet();
 		private final Set<String> paths = Sets.newHashSet();
 		private Stage stage = Stage.PRODUCTION;
 
-		@SuppressWarnings("unused")
 		public Builder modules(Module... modules) {
 			// check null
 			Collections.addAll(this.modules, modules);
@@ -70,7 +81,6 @@ public class GuiceContext<T extends Configuration> {
 			return this;
 		}
 
-		@SuppressWarnings("unused")
 		public Builder module(String moduleName) {
 			// check null
 			this.moduleNames.add(moduleName);
@@ -83,7 +93,6 @@ public class GuiceContext<T extends Configuration> {
 			return this;
 		}
 
-		@SuppressWarnings("unused")
 		public Builder paths(String... paths) {
 			// check null
 			Collections.addAll(this.paths, paths);
@@ -108,15 +117,7 @@ public class GuiceContext<T extends Configuration> {
 		}
 
 		public GuiceContext build() {		
-			// FIXME Error checking and validation
-
 			return new GuiceContext(this);
-
-			// scan for modules and add to modules
-			//Iterables.addAll(this.modules, this.scanForModules());
-
-			// create the injector
-			//return com.google.inject.Guice.createInjector(this.stage, this.modules); // FIXME double-check!
 		}
 	}
 
@@ -149,10 +150,21 @@ public class GuiceContext<T extends Configuration> {
 	}
 
 	public static GuiceContext build(File configFile, Class<? extends Configuration> clazz) {
-		return build(loadConfig(configFile.getAbsolutePath(), clazz));
+		return build(configFile.getAbsolutePath(), clazz);
+	}
+	
+	public static GuiceContext build(String configFile, Class<? extends Configuration> clazz) {
+		return build(loadConfig(configFile, clazz));
 	}
 
-	// build with ???
+	public static GuiceContext get(String configFile, Class<? extends Configuration> clazz) {
+		GuiceContext context = CACHE.get(configFile);
+		if (context == null) {
+			context = build(configFile, clazz);
+			CACHE.put(configFile, context);
+		}
+		return context;
+	}
 
 	public static GuiceConfiguration getGuiceConfig(Configuration config) {
 		for (Method method : config.getClass().getDeclaredMethods()) {
@@ -170,6 +182,8 @@ public class GuiceContext<T extends Configuration> {
 
 	public static <T extends Configuration> T loadConfig(String path, Class<T> clazz) {
 		try {
+			long start = System.currentTimeMillis();
+			
 			// FIXME: This should all be part of dropwizard?
 			ConfigurationFactoryFactory<T> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<T>();
 			ConfigurationSourceProvider provider = new FileConfigurationSourceProvider();
@@ -177,8 +191,15 @@ public class GuiceContext<T extends Configuration> {
 			ObjectMapper objectMapper = Jackson.newObjectMapper();
 
 			ConfigurationFactory<T> configurationFactory = configurationFactoryFactory.create(clazz, validator, objectMapper, "dw");
+			T config = configurationFactory.build(provider, path);
+			
+			// init logging
+			LOG.info("Initializing logging from configuration: {}", path);
+	        config.getLoggingFactory().configure(new MetricRegistry(), "guice-context");
 
-			return configurationFactory.build(provider, path);
+			LOG.info("Loaded config in {}ms: {}", (System.currentTimeMillis() - start), path);
+			
+			return config;
 		} 
 		catch (Exception e) {
 			throw new RuntimeException("Error loading config: " + path, e);
@@ -186,6 +207,8 @@ public class GuiceContext<T extends Configuration> {
 	}
 	
 	private GuiceContext(Builder builder) {
+		long start = System.currentTimeMillis();
+		
 		// In builder, or here?
 		Iterables.addAll(builder.modules, this.scanForModules(builder));
 		this.injector = Guice.createInjector(builder.stage, builder.modules);
@@ -193,6 +216,7 @@ public class GuiceContext<T extends Configuration> {
 		if (LOG.isTraceEnabled()) {
 			this.logInjector();
 		}
+		LOG.info("Loaded GuiceContext in {}ms: {}", (System.currentTimeMillis() - start), this);
 	}
 
 	private Iterable<? extends Module> scanForModules(Builder builder) {
@@ -215,12 +239,25 @@ public class GuiceContext<T extends Configuration> {
 	}
 
 	public <C> C get(Class<C> type) {
-		return this.injector().getInstance(type);
+		return this.injector.getInstance(type);
+	}
+	
+	public String toString() {
+		//return this.injector.toString();
+		Map<Key<?>, Binding<?>> bindings = this.injector().getBindings();
+		Set<String> keys = Sets.newHashSet(Iterables.transform(bindings.keySet(), keyNames));
+		return "GuiceContext[" + bindings.size() + "] " + keys;
 	}
 
 	private static final Function<Object,String> simpleNames = new Function<Object,String>() {
 		public String apply(Object input) {
 			return input.getClass().getSimpleName();
+		}
+	};
+	
+	private static final Function<Key<?>,String> keyNames = new Function<Key<?>,String>() {
+		public String apply(Key<?> input) {
+			return input.getTypeLiteral().getRawType().getSimpleName();
 		}
 	};
 
