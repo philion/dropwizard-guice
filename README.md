@@ -1,6 +1,8 @@
 Dropwizard-Guice
 ================
 
+[![Build Status](https://travis-ci.org/philion/dropwizard-guice.svg)](https://travis-ci.org/philion/dropwizard-guice)
+
 A simple DropWizard extension for integrating Guice via a bundle. It optionally uses classpath 
 scanning courtesy of the Reflections project to discover resources and more to install into 
 the dropwizard environment upon service start.
@@ -10,9 +12,9 @@ the dropwizard environment upon service start.
 ```xml
     <dependencies>
         <dependency>
-            <groupId>com.hubspot.dropwizard</groupId>
+            <groupId>com.acmerocket.dropwizard</groupId>
             <artifactId>dropwizard-guice</artifactId>
-            <version>0.7.0.2</version>
+            <version>0.7.1</version>
         </dependency>
     </dependencies>
 ```
